@@ -1,0 +1,24 @@
+# Temporary files created by Rovo Dev
+tmp_rovodev_*
+
+# Common development files
+.DS_Store
+.vscode/
+.idea/
+*.log
+*.tmp
+node_modules/
+.env
+.env.local
+*.pyc
+__pycache__/
+.pytest_cache/
+coverage/
+dist/
+build/
+
+# OS generated files
+Thumbs.db
+.Spotlight-V100
+.Trashes
+ehthumbs.db
