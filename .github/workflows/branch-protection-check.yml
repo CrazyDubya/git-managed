@@ -1,0 +1,128 @@
+name: Branch Protection Check
+
+on:
+  pull_request:
+    branches: [ main, staging ]
+  push:
+    branches: [ main, staging, develop ]
+
+jobs:
+  branch-protection-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        
+    - name: Check branch naming conventions
+      run: |
+        echo "🔍 Checking branch naming conventions..."
+        
+        BRANCH_NAME="${{ github.head_ref || github.ref_name }}"
+        echo "Current branch: $BRANCH_NAME"
+        
+        # Allow core branches
+        if [[ "$BRANCH_NAME" =~ ^(main|staging|develop|draft)$ ]]; then
+          echo "✅ Core branch - naming check passed"
+          exit 0
+        fi
+        
+        # Check feature branches
+        if [[ "$BRANCH_NAME" =~ ^feature/[a-z0-9-]+$ ]]; then
+          echo "✅ Feature branch naming is correct"
+          exit 0
+        fi
+        
+        # Check experiment branches
+        if [[ "$BRANCH_NAME" =~ ^experiment/[a-z0-9-]+$ ]]; then
+          echo "✅ Experiment branch naming is correct"
+          exit 0
+        fi
+        
+        # Check personal branches
+        if [[ "$BRANCH_NAME" =~ ^personal/[a-z0-9-]+/[a-z0-9-]+$ ]]; then
+          echo "✅ Personal branch naming is correct"
+          exit 0
+        fi
+        
+        # Check hotfix branches
+        if [[ "$BRANCH_NAME" =~ ^hotfix/[a-z0-9-]+$ ]]; then
+          echo "✅ Hotfix branch naming is correct"
+          exit 0
+        fi
+        
+        echo "❌ Branch naming convention violation!"
+        echo "Expected formats:"
+        echo "  - feature/your-feature-name"
+        echo "  - experiment/your-experiment"
+        echo "  - personal/username/purpose"
+        echo "  - hotfix/fix-description"
+        exit 1
+        
+    - name: Check commit message format
+      if: github.event_name == 'pull_request'
+      run: |
+        echo "🔍 Checking commit message format..."
+        
+        # Get commits in this PR
+        git log --format="%s" origin/${{ github.base_ref }}..${{ github.head_ref }} > pr_commits.txt
+        
+        while IFS= read -r commit_msg; do
+          echo "Checking: $commit_msg"
+          
+          # Check conventional commit format
+          if [[ "$commit_msg" =~ ^(feat|fix|docs|style|refactor|test|chore|WIP)(\(.+\))?: .+ ]]; then
+            echo "✅ Commit message format is correct"
+          else
+            echo "❌ Commit message format violation: $commit_msg"
+            echo "Expected format: type(scope): description"
+            echo "Types: feat, fix, docs, style, refactor, test, chore, WIP"
+            exit 1
+          fi
+        done < pr_commits.txt
+        
+    - name: Check for direct commits to protected branches
+      if: github.event_name == 'push'
+      run: |
+        BRANCH_NAME="${{ github.ref_name }}"
+        
+        if [[ "$BRANCH_NAME" == "main" ]]; then
+          echo "❌ Direct commits to main branch are not allowed!"
+          echo "Please use pull requests for all changes to main."
+          exit 1
+        fi
+        
+        if [[ "$BRANCH_NAME" == "staging" ]]; then
+          echo "⚠️ Direct commits to staging detected"
+          echo "Staging commits should typically come from develop branch"
+        fi
+        
+    - name: Check for large files
+      run: |
+        echo "🔍 Checking for large files..."
+        
+        # Find files larger than 10MB
+        large_files=$(find . -type f -size +10M -not -path "./.git/*" || true)
+        
+        if [ -n "$large_files" ]; then
+          echo "❌ Large files detected:"
+          echo "$large_files"
+          echo "Please use Git LFS for files larger than 10MB"
+          exit 1
+        else
+          echo "✅ No large files detected"
+        fi
+        
+    - name: Security scan
+      run: |
+        echo "🔍 Scanning for sensitive data..."
+        
+        # Check for potential secrets
+        if grep -r -i -E "(password|secret|token|key|api)" --include="*.js" --include="*.html" --include="*.md" . | grep -v -E "(example|placeholder|YOUR_|<your|dummy)" | head -5; then
+          echo "⚠️ Potential sensitive data detected. Please review."
+          echo "Make sure no real secrets are committed."
+        else
+          echo "✅ No obvious sensitive data detected"
+        fi

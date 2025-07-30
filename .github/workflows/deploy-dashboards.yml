@@ -1,0 +1,62 @@
+name: Deploy Dashboards
+
+on:
+  push:
+    branches: [ main ]
+    paths: [ 'dashboards/**' ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+      
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+      
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Pages
+      uses: actions/configure-pages@v4
+      
+    - name: Prepare dashboard files
+      run: |
+        # Create deployment directory
+        mkdir -p _site
+        
+        # Copy dashboard files
+        cp -r dashboards/* _site/
+        
+        # Update navigation for GitHub Pages
+        find _site -name "*.html" -exec sed -i 's/href="index\.html"/href="\/git-workflow-dashboard-system\/"/g' {} \;
+        
+        # Create a simple index redirect
+        cat > _site/index.html << 'EOF'
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="UTF-8">
+            <meta http-equiv="refresh" content="0; url=./index.html">
+            <title>Git Workflow Dashboards</title>
+        </head>
+        <body>
+            <p>Redirecting to <a href="./index.html">Git Workflow Dashboards</a>...</p>
+        </body>
+        </html>
+        EOF
+        
+    - name: Upload artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '_site'
+        
+    - name: Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
