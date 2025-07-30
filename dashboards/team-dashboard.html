@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Workflow Team Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .refresh-info {
+            background: #3498db;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            display: inline-block;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.4em;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-healthy { background: #27ae60; }
+        .status-warning { background: #f39c12; }
+        .status-danger { background: #e74c3c; }
+        .status-info { background: #3498db; }
+
+        .branch-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .branch-item:last-child {
+            border-bottom: none;
+        }
+
+        .branch-name {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+
+        .branch-info {
+            font-size: 0.9em;
+            color: #7f8c8d;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            margin: 10px 0;
+        }
+
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .metric-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .activity-item {
+            display: flex;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-time {
+            color: #7f8c8d;
+            font-size: 0.8em;
+            min-width: 60px;
+        }
+
+        .activity-message {
+            margin-left: 15px;
+            flex: 1;
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .action-btn {
+            background: linear-gradient(45deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            text-align: center;
+            display: block;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.4);
+        }
+
+        .action-btn.danger {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+        }
+
+        .action-btn.success {
+            background: linear-gradient(45deg, #27ae60, #229954);
+        }
+
+        .action-btn.warning {
+            background: linear-gradient(45deg, #f39c12, #e67e22);
+        }
+
+        .footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 30px;
+            padding: 20px;
+        }
+
+        .alert {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+
+        .alert.danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        .alert.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+            
+            .quick-actions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<script src="navigation.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Git Workflow Team Dashboard</h1>
+            <p>Monitor your team's Git workflow health and activity</p>
+            <div class="refresh-info">
+                📊 Last updated: <span id="lastUpdate">Loading...</span>
+                <button onclick="refreshData()" style="margin-left: 10px; background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer;">🔄 Refresh</button>
+            </div>
+        </div>
+
+        <div class="dashboard-grid">
+            <!-- Branch Health Card -->
+            <div class="card">
+                <h3>🌿 Branch Health Status</h3>
+                <div id="branchHealth">
+                    <div class="branch-item">
+                        <div>
+                            <span class="status-indicator status-healthy"></span>
+                            <span class="branch-name">main</span>
+                        </div>
+                        <div class="branch-info">Production Ready</div>
+                    </div>
+                    <div class="branch-item">
+                        <div>
+                            <span class="status-indicator status-warning"></span>
+                            <span class="branch-name">staging</span>
+                        </div>
+                        <div class="branch-info">Testing in Progress</div>
+                    </div>
+                    <div class="branch-item">
+                        <div>
+                            <span class="status-indicator status-healthy"></span>
+                            <span class="branch-name">develop</span>
+                        </div>
+                        <div class="branch-info">Integration Ready</div>
+                    </div>
+                    <div class="branch-item">
+                        <div>
+                            <span class="status-indicator status-info"></span>
+                            <span class="branch-name">draft</span>
+                        </div>
+                        <div class="branch-info">Experimental</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team Metrics Card -->
+            <div class="card">
+                <h3>📊 Team Metrics</h3>
+                <div class="metric">
+                    <div class="metric-value" id="activeFeatures">7</div>
+                    <div class="metric-label">Active Features</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="experimentsCount">12</div>
+                    <div class="metric-label">Running Experiments</div>
+                </div>
+                <div class="metric">
+                    <div class="metric-value" id="pendingMerges">3</div>
+                    <div class="metric-label">Pending Merges</div>
+                </div>
+            </div>
+
+            <!-- Recent Activity Card -->
+            <div class="card">
+                <h3>⚡ Recent Team Activity</h3>
+                <div id="recentActivity">
+                    <div class="activity-item">
+                        <div class="activity-time">2m ago</div>
+                        <div class="activity-message">
+                            <strong>Alice</strong> merged feature/user-auth to develop
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-time">15m ago</div>
+                        <div class="activity-message">
+                            <strong>Bob</strong> created experiment/ml-recommendations
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-time">1h ago</div>
+                        <div class="activity-message">
+                            <strong>Charlie</strong> pushed hotfix/security-patch to main
+                        </div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="activity-time">2h ago</div>
+                        <div class="activity-message">
+                            <strong>Diana</strong> started personal/diana/api-refactor
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Alerts & Warnings Card -->
+            <div class="card">
+                <h3>⚠️ Alerts & Warnings</h3>
+                <div id="alerts">
+                    <div class="alert">
+                        <strong>Branch Cleanup Needed:</strong> 8 merged feature branches should be deleted
+                    </div>
+                    <div class="alert danger">
+                        <strong>Stale Branch Alert:</strong> feature/old-login hasn't been updated in 14 days
+                    </div>
+                    <div class="alert success">
+                        <strong>All Good:</strong> No direct commits to main branch detected
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Actions Section -->
+        <div class="card">
+            <h3>🎯 Quick Team Actions</h3>
+            <div class="quick-actions">
+                <button class="action-btn" onclick="runCommand('git_status_overview')">📊 Status Overview</button>
+                <button class="action-btn success" onclick="runCommand('cleanup_merged_branches')">🧹 Cleanup Branches</button>
+                <button class="action-btn warning" onclick="showBranchList()">🌿 View All Branches</button>
+                <button class="action-btn" onclick="showHelp()">❓ Show Help</button>
+                <button class="action-btn danger" onclick="showEmergencyOptions()">🚨 Emergency Tools</button>
+                <a href="individual-dashboard.html" class="action-btn">👤 Individual Dashboard</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>🔧 Git Workflow Dashboard | Built for chaotic teams and individual experimenters</p>
+            <p>💡 Run <code>source scripts/git-helpers.sh</code> to enable command integration</p>
+        </div>
+    </div>
+
+    <script>
+        // Update timestamp
+        function updateTimestamp() {
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString();
+        }
+
+        // Simulate data refresh
+        function refreshData() {
+            updateTimestamp();
+            
+            // Simulate loading
+            const refreshBtn = document.querySelector('button[onclick="refreshData()"]');
+            const originalText = refreshBtn.innerHTML;
+            refreshBtn.innerHTML = '⏳ Refreshing...';
+            refreshBtn.disabled = true;
+            
+            setTimeout(() => {
+                refreshBtn.innerHTML = originalText;
+                refreshBtn.disabled = false;
+                
+                // Update some random metrics to show refresh
+                document.getElementById('activeFeatures').textContent = Math.floor(Math.random() * 10) + 5;
+                document.getElementById('experimentsCount').textContent = Math.floor(Math.random() * 15) + 8;
+                document.getElementById('pendingMerges').textContent = Math.floor(Math.random() * 5) + 1;
+                
+                alert('✅ Dashboard refreshed! In a real implementation, this would run git commands to get current status.');
+            }, 1500);
+        }
+
+        // Command execution simulation
+        function runCommand(command) {
+            alert(`🔧 Would execute: ${command}\n\nIn a real implementation, this would:\n1. Run the git command\n2. Parse the output\n3. Update the dashboard\n4. Show results in a modal`);
+        }
+
+        function showBranchList() {
+            const branches = [
+                'main (production)',
+                'staging (testing)',
+                'develop (integration)',
+                'draft (experimental)',
+                'feature/user-authentication (Alice)',
+                'feature/payment-gateway (Bob)',
+                'experiment/ml-recommendations (Bob)',
+                'personal/alice/ui-redesign (Alice)',
+                'personal/charlie/performance-test (Charlie)',
+                'hotfix/security-patch (merged)',
+            ];
+            
+            alert('🌿 All Branches:\n\n' + branches.join('\n'));
+        }
+
+        function showHelp() {
+            alert(`🎯 Team Dashboard Help:
+
+📊 Status Overview - Shows current git status
+🧹 Cleanup Branches - Removes merged feature branches  
+🌿 View All Branches - Lists all repository branches
+👤 Individual Dashboard - Switch to personal view
+🚨 Emergency Tools - Access disaster recovery
+
+💡 Tips:
+- Refresh regularly to see latest team activity
+- Use cleanup tools weekly to maintain repository health
+- Check alerts for potential issues
+- Switch to Individual Dashboard for personal experiment tracking`);
+        }
+
+        function showEmergencyOptions() {
+            const emergency = confirm(`🚨 Emergency Tools
+
+These are powerful commands that can affect the entire team.
+Only use if you know what you're doing!
+
+Available emergency tools:
+- Reset branch to origin
+- Force cleanup all branches  
+- Emergency backup
+- Disaster recovery mode
+
+Do you want to proceed to emergency tools?`);
+            
+            if (emergency) {
+                alert(`🚨 Emergency Tools:
+
+⚠️ DANGER ZONE ⚠️
+
+1. emergency_reset - Reset current branch to origin
+2. Force cleanup - Remove ALL unmerged branches
+3. Repository backup - Create full backup
+4. Contact admin - Get help from DevOps team
+
+⚠️ These commands can cause data loss!
+⚠️ Always backup before using emergency tools!
+
+See TROUBLESHOOTING.md for detailed recovery procedures.`);
+            }
+        }
+
+        // Initialize dashboard
+        updateTimestamp();
+        
+        // Auto-refresh timestamp every minute
+        setInterval(updateTimestamp, 60000);
+
+        // Simulate real-time updates (in real implementation, this would poll git status)
+        setInterval(() => {
+            // Randomly update activity (simulation)
+            if (Math.random() > 0.8) {
+                const activities = [
+                    'New commit pushed to develop',
+                    'Feature branch created',
+                    'Experiment started',
+                    'Branch merged successfully',
+                    'Hotfix deployed to production'
+                ];
+                
+                // In real implementation, this would update with actual git activity
+                console.log('Simulated activity:', activities[Math.floor(Math.random() * activities.length)]);
+            }
+        }, 30000);
+    </script>
+</body>
+</html>

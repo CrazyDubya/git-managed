@@ -1,0 +1,2121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Quick Actions GUI</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #7f8c8d;
+            font-size: 1.2em;
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+        }
+
+        .action-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+
+        .card-icon {
+            font-size: 2em;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+            cursor: pointer;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ecf0f1;
+            border-radius: 8px;
+            font-size: 1em;
+            min-height: 80px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .command-preview {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            margin: 15px 0;
+            border-left: 4px solid #3498db;
+        }
+
+        .command-preview pre {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+        .quick-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .quick-btn {
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+
+        .status-success {
+            background: #27ae60;
+        }
+
+        .status-warning {
+            background: #f39c12;
+        }
+
+        .status-error {
+            background: #e74c3c;
+        }
+
+        .status-info {
+            background: #3498db;
+        }
+
+        .help-text {
+            font-size: 0.9em;
+            color: #7f8c8d;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .current-status {
+            background: rgba(52, 152, 219, 0.1);
+            border: 1px solid #3498db;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .current-status h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: white;
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid #ecf0f1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            transition: opacity 0.3s ease;
+        }
+
+        .close:hover {
+            opacity: 0.7;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #ecf0f1;
+        }
+
+        /* Notification Styles */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 2000;
+            max-width: 400px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: slideIn 0.3s ease;
+        }
+
+        .notification-success {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+        }
+
+        .notification-error {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .notification-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .notification-info {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+        }
+
+        .notification-content {
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .notification-message {
+            flex: 1;
+            margin-right: 10px;
+        }
+
+        .notification-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            padding: 0;
+            width: 20px;
+            height: 20px;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* History Styles */
+        .history-item {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+        }
+
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+        }
+
+        .history-time {
+            color: #7f8c8d;
+        }
+
+        .history-branch {
+            background: #3498db;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+        }
+
+        .history-status.success {
+            color: #27ae60;
+        }
+
+        .history-status.error {
+            color: #e74c3c;
+        }
+
+        .history-description {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #2c3e50;
+        }
+
+        .history-command {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-command code {
+            flex: 1;
+            background: none;
+            color: inherit;
+        }
+
+        .btn-small {
+            padding: 5px 10px;
+            font-size: 0.8em;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        /* Floating Action Button */
+        .floating-actions {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            z-index: 1000;
+        }
+
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5em;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s ease;
+            margin-bottom: 10px;
+            display: block;
+        }
+
+        .main-fab {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .fab:not(.main-fab) {
+            background: white;
+            color: #333;
+            transform: scale(0);
+            opacity: 0;
+        }
+
+        .fab-menu.open .fab:not(.main-fab) {
+            transform: scale(1);
+            opacity: 1;
+        }
+
+        .fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Tooltip Popup */
+        .tooltip-popup {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 1001;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Help Styles */
+        .help-section {
+            margin-bottom: 25px;
+        }
+
+        .help-section h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .help-section ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .help-section li {
+            padding: 5px 0;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .help-section li:last-child {
+            border-bottom: none;
+        }
+
+        .help-section strong {
+            color: #3498db;
+        }
+
+        .help-section a {
+            color: #3498db;
+            text-decoration: none;
+        }
+
+        .help-section a:hover {
+            text-decoration: underline;
+        }
+
+        /* Tutorial System Styles */
+        .tutorial-selector-modal {
+            display: block;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .tutorial-options {
+            display: grid;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .tutorial-option {
+            background: #f8f9fa;
+            border: 2px solid #ecf0f1;
+            border-radius: 10px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-option:hover {
+            border-color: #3498db;
+            background: #e8f4fd;
+            transform: translateY(-2px);
+        }
+
+        .tutorial-option h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+        }
+
+        .tutorial-option p {
+            margin: 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .tutorial-popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 3000;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 90%;
+            animation: tutorialSlideIn 0.3s ease;
+        }
+
+        .tutorial-content {
+            padding: 0;
+        }
+
+        .tutorial-header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px 15px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .tutorial-header h4 {
+            margin: 0;
+            font-size: 1.3em;
+        }
+
+        .tutorial-progress {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 0.9em;
+        }
+
+        .tutorial-body {
+            padding: 25px;
+        }
+
+        .tutorial-body p {
+            margin: 0 0 20px 0;
+            line-height: 1.6;
+            color: #2c3e50;
+        }
+
+        .tutorial-actions {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            padding: 0 25px 25px 25px;
+        }
+
+        .tutorial-action-btn {
+            background: linear-gradient(135deg, #27ae60, #229954);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .tutorial-next-btn,
+        .tutorial-skip-btn {
+            background: #95a5a6;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .tutorial-next-btn:hover,
+        .tutorial-skip-btn:hover {
+            background: #7f8c8d;
+        }
+
+        .tutorial-highlight {
+            position: relative;
+            z-index: 1001;
+        }
+
+        .tutorial-highlight::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            background: rgba(52, 152, 219, 0.3);
+            border: 2px solid #3498db;
+            border-radius: 10px;
+            z-index: -1;
+            animation: tutorialPulse 2s infinite;
+        }
+
+        /* Git Command Modal Styles */
+        .git-command-modal {
+            display: block;
+            position: fixed;
+            z-index: 2500;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(5px);
+        }
+
+        .git-command-modal .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .command-description {
+            background: #e8f4fd;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            color: #2c3e50;
+            border-left: 4px solid #3498db;
+        }
+
+        .command-preview {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            border-left: 4px solid #3498db;
+        }
+
+        .command-preview code {
+            background: none;
+            color: inherit;
+            font-size: 1em;
+        }
+
+        .command-actions {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .command-result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            background: #f8f9fa;
+        }
+
+        .command-result h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+
+        .result-output {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            white-space: pre-wrap;
+            margin: 0;
+        }
+
+        .result-output.success {
+            border-left: 4px solid #27ae60;
+        }
+
+        .result-output.error {
+            border-left: 4px solid #e74c3c;
+        }
+
+        .tutorial-tip {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-size: 0.9em;
+        }
+
+        @keyframes tutorialSlideIn {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -60%);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%);
+            }
+        }
+
+        @keyframes tutorialPulse {
+            0%, 100% {
+                opacity: 0.7;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 1;
+                transform: scale(1.02);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .btn-group {
+                justify-content: center;
+            }
+            
+            .quick-buttons {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .floating-actions {
+                bottom: 20px;
+                right: 20px;
+            }
+
+            .history-command {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn-small {
+                margin-top: 10px;
+                align-self: flex-end;
+            }
+        }
+    </style>
+</head>
+<body>
+<script src="navigation.js"></script>
+<script src="git-integration.js"></script>
+<script src="real-git-executor.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>⚡ Git Quick Actions GUI</h1>
+            <p>Point-and-click interface for common Git operations</p>
+        </div>
+
+        <!-- Current Status -->
+        <div class="current-status">
+            <h3>📊 Current Git Status</h3>
+            <div class="status-grid">
+                <div class="status-item">
+                    <span class="status-indicator status-info"></span>
+                    <span>Branch: <strong id="current-branch">develop</strong></span>
+                </div>
+                <div class="status-item">
+                    <span class="status-indicator status-success"></span>
+                    <span>Status: <strong>Clean</strong></span>
+                </div>
+                <div class="status-item">
+                    <span class="status-indicator status-warning"></span>
+                    <span>Uncommitted: <strong>3 files</strong></span>
+                </div>
+                <div class="status-item">
+                    <span class="status-indicator status-info"></span>
+                    <span>Ahead: <strong>2 commits</strong></span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Action Buttons -->
+        <div class="quick-buttons">
+            <button class="quick-btn" onclick="quickStatus()">
+                📊 Git Status
+            </button>
+            <button class="quick-btn" onclick="quickPull()">
+                ⬇️ Pull Latest
+            </button>
+            <button class="quick-btn" onclick="quickPush()">
+                ⬆️ Push Changes
+            </button>
+            <button class="quick-btn" onclick="quickStash()">
+                💾 Stash Changes
+            </button>
+            <button class="quick-btn" onclick="quickLog()">
+                📜 View Log
+            </button>
+            <button class="quick-btn" onclick="startTutorial()">
+                🎓 Start Tutorial
+            </button>
+            <button class="quick-btn" onclick="emergencyHelp()">
+                🆘 Emergency Help
+            </button>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="actions-grid">
+            <!-- Create Branch -->
+            <div class="action-card">
+                <div class="card-header">
+                    <div class="card-icon">🌿</div>
+                    <div class="card-title">Create Branch</div>
+                </div>
+                
+                <form id="create-branch-form">
+                    <div class="form-group">
+                        <label class="form-label">Branch Type</label>
+                        <select class="form-select" id="branch-type" onchange="updateBranchPrefix()">
+                            <option value="feature">Feature Branch</option>
+                            <option value="experiment">Experiment Branch</option>
+                            <option value="personal">Personal Branch</option>
+                            <option value="hotfix">Hotfix Branch</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Branch Name</label>
+                        <input type="text" class="form-input" id="branch-name" placeholder="user-authentication" onkeyup="updateBranchPreview()">
+                        <div class="help-text">Use lowercase with hyphens (e.g., user-authentication)</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Start From</label>
+                        <select class="form-select" id="start-from">
+                            <option value="develop">develop</option>
+                            <option value="main">main</option>
+                            <option value="draft">draft</option>
+                            <option value="staging">staging</option>
+                        </select>
+                    </div>
+                    
+                    <div class="command-preview">
+                        <pre id="branch-command">git checkout develop
+git pull origin develop
+git checkout -b feature/user-authentication</pre>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-primary" onclick="createBranch()">Create Branch</button>
+                        <button type="button" class="btn btn-secondary" onclick="copyCommand('branch-command')">Copy Command</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Commit Changes -->
+            <div class="action-card">
+                <div class="card-header">
+                    <div class="card-icon">💾</div>
+                    <div class="card-title">Commit Changes</div>
+                </div>
+                
+                <form id="commit-form">
+                    <div class="form-group">
+                        <label class="form-label">Commit Type</label>
+                        <select class="form-select" id="commit-type" onchange="updateCommitPreview()">
+                            <option value="feat">feat: New feature</option>
+                            <option value="fix">fix: Bug fix</option>
+                            <option value="docs">docs: Documentation</option>
+                            <option value="style">style: Code style</option>
+                            <option value="refactor">refactor: Code refactoring</option>
+                            <option value="test">test: Tests</option>
+                            <option value="chore">chore: Maintenance</option>
+                            <option value="WIP">WIP: Work in progress</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Commit Message</label>
+                        <input type="text" class="form-input" id="commit-message" placeholder="add user authentication" onkeyup="updateCommitPreview()">
+                        <div class="help-text">Brief description of what you changed</div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Files to Include</label>
+                        <select class="form-select" id="files-to-commit">
+                            <option value="all">All changed files</option>
+                            <option value="staged">Only staged files</option>
+                            <option value="select">Select specific files</option>
+                        </select>
+                    </div>
+                    
+                    <div class="command-preview">
+                        <pre id="commit-command">git add .
+git commit -m "feat: add user authentication"</pre>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-success" onclick="commitChanges()">Commit</button>
+                        <button type="button" class="btn btn-warning" onclick="commitAndPush()">Commit & Push</button>
+                        <button type="button" class="btn btn-secondary" onclick="copyCommand('commit-command')">Copy Command</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Merge Branch -->
+            <div class="action-card">
+                <div class="card-header">
+                    <div class="card-icon">🔄</div>
+                    <div class="card-title">Merge Branch</div>
+                </div>
+                
+                <form id="merge-form">
+                    <div class="form-group">
+                        <label class="form-label">Source Branch</label>
+                        <select class="form-select" id="source-branch" onchange="updateMergePreview()">
+                            <option value="feature/user-auth">feature/user-auth</option>
+                            <option value="feature/api-redesign">feature/api-redesign</option>
+                            <option value="experiment/redis-cache">experiment/redis-cache</option>
+                            <option value="personal/john/auth-jwt">personal/john/auth-jwt</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Target Branch</label>
+                        <select class="form-select" id="target-branch" onchange="updateMergePreview()">
+                            <option value="develop">develop</option>
+                            <option value="staging">staging</option>
+                            <option value="main">main</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Merge Strategy</label>
+                        <select class="form-select" id="merge-strategy" onchange="updateMergePreview()">
+                            <option value="--no-ff">No Fast-Forward (recommended)</option>
+                            <option value="">Fast-Forward if possible</option>
+                            <option value="--squash">Squash commits</option>
+                        </select>
+                    </div>
+                    
+                    <div class="command-preview">
+                        <pre id="merge-command">git checkout develop
+git pull origin develop
+git merge --no-ff feature/user-auth
+git push origin develop</pre>
+                    </div>
+                    
+                    <div class="btn-group">
+                        <button type="button" class="btn btn-warning" onclick="mergeBranch()">Merge Branch</button>
+                        <button type="button" class="btn btn-danger" onclick="deleteBranchAfterMerge()">Merge & Delete</button>
+                        <button type="button" class="btn btn-secondary" onclick="copyCommand('merge-command')">Copy Command</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Emergency Actions -->
+            <div class="action-card">
+                <div class="card-header">
+                    <div class="card-icon">🚨</div>
+                    <div class="card-title">Emergency Actions</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Quick Recovery</label>
+                    <div class="btn-group" style="flex-direction: column; gap: 10px;">
+                        <button class="btn btn-warning" onclick="undoLastCommit()">
+                            ↩️ Undo Last Commit
+                        </button>
+                        <button class="btn btn-danger" onclick="resetToOrigin()">
+                            🔄 Reset to Origin
+                        </button>
+                        <button class="btn btn-secondary" onclick="stashEverything()">
+                            💾 Stash Everything
+                        </button>
+                        <button class="btn btn-info" onclick="showReflog()">
+                            📜 Show Reflog
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Branch Cleanup</label>
+                    <div class="btn-group" style="flex-direction: column; gap: 10px;">
+                        <button class="btn btn-primary" onclick="cleanupMergedBranches()">
+                            🧹 Cleanup Merged Branches
+                        </button>
+                        <button class="btn btn-warning" onclick="listAllBranches()">
+                            📋 List All Branches
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Status & Info -->
+            <div class="action-card">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div class="card-title">Status & Information</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Repository Information</label>
+                    <div class="btn-group" style="flex-direction: column; gap: 10px;">
+                        <button class="btn btn-primary" onclick="showDetailedStatus()">
+                            📊 Detailed Status
+                        </button>
+                        <button class="btn btn-secondary" onclick="showBranchInfo()">
+                            🌿 Branch Information
+                        </button>
+                        <button class="btn btn-info" onclick="showRemoteInfo()">
+                            🌐 Remote Information
+                        </button>
+                        <button class="btn btn-success" onclick="showRecentCommits()">
+                            📜 Recent Commits
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Helper Functions</label>
+                    <div class="btn-group" style="flex-direction: column; gap: 10px;">
+                        <button class="btn btn-warning" onclick="loadHelperFunctions()">
+                            🛠️ Load Helper Functions
+                        </button>
+                        <button class="btn btn-info" onclick="showHelp()">
+                            ❓ Show Help
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Individual Developer Tools -->
+            <div class="action-card">
+                <div class="card-header">
+                    <div class="card-icon">🧪</div>
+                    <div class="card-title">Individual Developer Tools</div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Experiment Management</label>
+                    <div class="btn-group" style="flex-direction: column; gap: 10px;">
+                        <button class="btn btn-primary" onclick="createPersonalBranch()">
+                            🧪 New Personal Branch
+                        </button>
+                        <button class="btn btn-success" onclick="backupCurrentWork()">
+                            💾 Backup Current Work
+                        </button>
+                        <button class="btn btn-warning" onclick="startCleanupProcess()">
+                            ✨ Start Cleanup Process
+                        </button>
+                        <button class="btn btn-info" onclick="findWorkingCommits()">
+                            🔍 Find Working Commits
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Emergency Individual Tools</label>
+                    <div class="btn-group" style="flex-direction: column; gap: 10px;">
+                        <button class="btn btn-danger" onclick="emergencyExtract()">
+                            🚨 Emergency Extract
+                        </button>
+                        <button class="btn btn-secondary" onclick="experimentStatus()">
+                            📊 Experiment Status
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Command History Modal -->
+    <div id="history-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📜 Command History</h3>
+                <span class="close" onclick="closeHistoryModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="command-history-list"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="clearHistory()">Clear History</button>
+                    <button class="btn btn-primary" onclick="exportHistory()">Export History</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal -->
+    <div id="help-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>❓ Quick Help</h3>
+                <span class="close" onclick="closeHelpModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="help-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Action Button -->
+    <div class="floating-actions">
+        <button class="fab main-fab" onclick="toggleFabMenu()">⚡</button>
+        <div class="fab-menu" id="fab-menu">
+            <button class="fab" onclick="showCommandHistory()" title="Command History">📜</button>
+            <button class="fab" onclick="showQuickHelp()" title="Quick Help">❓</button>
+            <button class="fab" onclick="refreshStatus()" title="Refresh Status">🔄</button>
+            <button class="fab" onclick="openTerminal()" title="Open Terminal">💻</button>
+        </div>
+    </div>
+
+    <script>
+        // Global state management
+        let commandHistory = JSON.parse(localStorage.getItem('git-gui-history') || '[]');
+        let currentGitStatus = {
+            branch: 'develop',
+            status: 'clean',
+            uncommitted: 3,
+            ahead: 2,
+            behind: 0
+        };
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBranchPreview();
+            updateCommitPreview();
+            updateMergePreview();
+            loadGitStatus();
+            addFormValidation();
+            addTooltips();
+            setupRealGitIntegration();
+        });
+
+        // Setup real Git integration
+        async function setupRealGitIntegration() {
+            try {
+                // Wait for Git integration to initialize
+                if (typeof gitIntegration !== 'undefined') {
+                    await gitIntegration.initialize();
+                }
+                
+                // Setup real status updates
+                await refreshGitStatus();
+                
+                // Auto-refresh every 30 seconds
+                setInterval(refreshGitStatus, 30000);
+                
+                console.log('✅ Real Git integration active');
+            } catch (error) {
+                console.warn('⚠️ Git integration limited:', error.message);
+                showWarning('Git integration running in limited mode. Some features may show commands instead of executing them.');
+            }
+        }
+
+        // Real Git status refresh
+        async function refreshGitStatus() {
+            try {
+                const status = await realGit.getRealGitStatus();
+                updateStatusDisplay(status);
+            } catch (error) {
+                console.warn('Could not refresh Git status:', error);
+            }
+        }
+
+        // Update status display with real data
+        function updateStatusDisplay(status) {
+            if (!status) return;
+            
+            document.getElementById('current-branch').textContent = status.currentBranch;
+            
+            const statusItems = document.querySelectorAll('.status-item');
+            if (statusItems.length >= 4) {
+                statusItems[0].querySelector('strong').textContent = status.currentBranch;
+                statusItems[1].querySelector('strong').textContent = status.isClean ? 'Clean' : 'Modified';
+                statusItems[2].querySelector('strong').textContent = `${status.uncommittedFiles} files`;
+                statusItems[3].querySelector('strong').textContent = `${status.commitsAhead} commits`;
+            }
+            
+            // Update status indicators
+            const indicators = document.querySelectorAll('.status-indicator');
+            indicators.forEach(indicator => {
+                indicator.className = 'status-indicator ' + (status.isClean ? 'status-success' : 'status-warning');
+            });
+        }
+
+        // Enhanced command logging
+        function logCommand(command, description, success = true) {
+            const entry = {
+                timestamp: new Date().toISOString(),
+                command: command,
+                description: description,
+                success: success,
+                branch: currentGitStatus.branch
+            };
+            
+            commandHistory.unshift(entry);
+            if (commandHistory.length > 50) {
+                commandHistory = commandHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('git-gui-history', JSON.stringify(commandHistory));
+            updateHistoryDisplay();
+        }
+
+        // Enhanced status loading
+        function loadGitStatus() {
+            // Simulate loading git status (in real implementation, this would call actual git commands)
+            updateStatusDisplay();
+        }
+
+        function updateStatusDisplay() {
+            document.getElementById('current-branch').textContent = currentGitStatus.branch;
+            
+            // Update status indicators
+            const statusItems = document.querySelectorAll('.status-item');
+            statusItems[0].querySelector('strong').textContent = currentGitStatus.branch;
+            statusItems[1].querySelector('strong').textContent = currentGitStatus.status === 'clean' ? 'Clean' : 'Modified';
+            statusItems[2].querySelector('strong').textContent = `${currentGitStatus.uncommitted} files`;
+            statusItems[3].querySelector('strong').textContent = `${currentGitStatus.ahead} commits`;
+        }
+
+        // Form validation
+        function addFormValidation() {
+            const branchNameInput = document.getElementById('branch-name');
+            const commitMessageInput = document.getElementById('commit-message');
+            
+            branchNameInput.addEventListener('input', function() {
+                validateBranchName(this);
+            });
+            
+            commitMessageInput.addEventListener('input', function() {
+                validateCommitMessage(this);
+            });
+        }
+
+        function validateBranchName(input) {
+            const value = input.value;
+            const isValid = /^[a-z0-9-]+$/.test(value) && value.length > 0;
+            
+            input.style.borderColor = isValid ? '#27ae60' : '#e74c3c';
+            
+            const helpText = input.parentNode.querySelector('.help-text');
+            if (!isValid && value.length > 0) {
+                helpText.textContent = 'Use only lowercase letters, numbers, and hyphens';
+                helpText.style.color = '#e74c3c';
+            } else {
+                helpText.textContent = 'Use lowercase with hyphens (e.g., user-authentication)';
+                helpText.style.color = '#7f8c8d';
+            }
+            
+            return isValid;
+        }
+
+        function validateCommitMessage(input) {
+            const value = input.value;
+            const isValid = value.length >= 3 && value.length <= 50;
+            
+            input.style.borderColor = isValid ? '#27ae60' : '#e74c3c';
+            
+            const helpText = input.parentNode.querySelector('.help-text');
+            if (!isValid && value.length > 0) {
+                if (value.length < 3) {
+                    helpText.textContent = 'Message too short (minimum 3 characters)';
+                } else {
+                    helpText.textContent = 'Message too long (maximum 50 characters)';
+                }
+                helpText.style.color = '#e74c3c';
+            } else {
+                helpText.textContent = 'Brief description of what you changed';
+                helpText.style.color = '#7f8c8d';
+            }
+            
+            return isValid;
+        }
+
+        // Enhanced tooltips
+        function addTooltips() {
+            const tooltipElements = document.querySelectorAll('[data-tooltip]');
+            tooltipElements.forEach(element => {
+                element.addEventListener('mouseenter', showTooltip);
+                element.addEventListener('mouseleave', hideTooltip);
+            });
+        }
+
+        function showTooltip(event) {
+            const tooltip = document.createElement('div');
+            tooltip.className = 'tooltip-popup';
+            tooltip.textContent = event.target.getAttribute('data-tooltip');
+            document.body.appendChild(tooltip);
+            
+            const rect = event.target.getBoundingClientRect();
+            tooltip.style.left = rect.left + 'px';
+            tooltip.style.top = (rect.top - tooltip.offsetHeight - 5) + 'px';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.querySelector('.tooltip-popup');
+            if (tooltip) {
+                tooltip.remove();
+            }
+        }
+
+        // Update branch preview
+        function updateBranchPrefix() {
+            updateBranchPreview();
+        }
+
+        function updateBranchPreview() {
+            const type = document.getElementById('branch-type').value;
+            const name = document.getElementById('branch-name').value;
+            const startFrom = document.getElementById('start-from').value;
+            
+            let branchName = '';
+            if (type === 'personal') {
+                branchName = `personal/user/${name}`;
+            } else {
+                branchName = `${type}/${name}`;
+            }
+            
+            const command = `git checkout ${startFrom}
+git pull origin ${startFrom}
+git checkout -b ${branchName}`;
+            
+            document.getElementById('branch-command').textContent = command;
+        }
+
+        // Update commit preview
+        function updateCommitPreview() {
+            const type = document.getElementById('commit-type').value;
+            const message = document.getElementById('commit-message').value;
+            const files = document.getElementById('files-to-commit').value;
+            
+            let addCommand = 'git add .';
+            if (files === 'staged') {
+                addCommand = '# Files already staged';
+            } else if (files === 'select') {
+                addCommand = 'git add <specific-files>';
+            }
+            
+            const commitMessage = message ? `${type}: ${message}` : `${type}: <description>`;
+            
+            const command = `${addCommand}
+git commit -m "${commitMessage}"`;
+            
+            document.getElementById('commit-command').textContent = command;
+        }
+
+        // Update merge preview
+        function updateMergePreview() {
+            const source = document.getElementById('source-branch').value;
+            const target = document.getElementById('target-branch').value;
+            const strategy = document.getElementById('merge-strategy').value;
+            
+            const command = `git checkout ${target}
+git pull origin ${target}
+git merge ${strategy} ${source}
+git push origin ${target}`;
+            
+            document.getElementById('merge-command').textContent = command;
+        }
+
+        // Copy command to clipboard
+        function copyCommand(elementId) {
+            const command = document.getElementById(elementId).textContent;
+            navigator.clipboard.writeText(command).then(() => {
+                alert('Command copied to clipboard!');
+            });
+        }
+
+        // Initialize previews
+        document.addEventListener('DOMContentLoaded', function() {
+            updateBranchPreview();
+            updateCommitPreview();
+            updateMergePreview();
+        });
+
+        // Enhanced action functions with REAL Git execution
+        async function createBranch() {
+            const branchName = document.getElementById('branch-name').value;
+            const branchType = document.getElementById('branch-type').value;
+            const startFrom = document.getElementById('start-from').value;
+            
+            if (!validateBranchName(document.getElementById('branch-name'))) {
+                showError('Please enter a valid branch name');
+                return;
+            }
+            
+            if (!branchName) {
+                showError('Branch name is required');
+                return;
+            }
+            
+            const fullBranchName = branchType === 'personal' 
+                ? `personal/user/${branchName}` 
+                : `${branchType}/${branchName}`;
+            
+            showInfo('Creating branch...');
+            
+            try {
+                // Use real Git executor
+                const results = await realGit.createBranch(fullBranchName, startFrom);
+                
+                if (results.every(r => r.success || r.cancelled)) {
+                    showSuccess(`✅ Branch ${fullBranchName} created successfully!`);
+                    
+                    // Reset form and refresh status
+                    document.getElementById('branch-name').value = '';
+                    updateBranchPreview();
+                    await refreshGitStatus();
+                } else {
+                    const failedCommand = results.find(r => !r.success && !r.cancelled);
+                    showError(`❌ Failed to create branch: ${failedCommand?.stderr || failedCommand?.error}`);
+                }
+            } catch (error) {
+                showError(`❌ Error creating branch: ${error.message}`);
+            }
+        }
+
+        async function commitChanges() {
+            const commitMessage = document.getElementById('commit-message').value;
+            const commitType = document.getElementById('commit-type').value;
+            const filesToCommit = document.getElementById('files-to-commit').value;
+            
+            if (!validateCommitMessage(document.getElementById('commit-message'))) {
+                showError('Please enter a valid commit message');
+                return;
+            }
+            
+            if (!commitMessage) {
+                showError('Commit message is required');
+                return;
+            }
+            
+            showInfo('Committing changes...');
+            
+            try {
+                const files = filesToCommit === 'all' ? '.' : 
+                             filesToCommit === 'staged' ? '--staged' : '.';
+                
+                const results = await realGit.commitChanges(commitType, commitMessage, files);
+                
+                if (results.every(r => r.success || r.cancelled)) {
+                    showSuccess(`✅ Changes committed: ${commitType}: ${commitMessage}`);
+                    
+                    // Reset form and refresh status
+                    document.getElementById('commit-message').value = '';
+                    updateCommitPreview();
+                    await refreshGitStatus();
+                } else {
+                    const failedCommand = results.find(r => !r.success && !r.cancelled);
+                    showError(`❌ Failed to commit: ${failedCommand?.stderr || failedCommand?.error}`);
+                }
+            } catch (error) {
+                showError(`❌ Error committing changes: ${error.message}`);
+            }
+        }
+
+        function commitAndPush() {
+            const commitMessage = document.getElementById('commit-message').value;
+            
+            if (!validateCommitMessage(document.getElementById('commit-message'))) {
+                showError('Please enter a valid commit message');
+                return;
+            }
+            
+            const command = document.getElementById('commit-command').textContent;
+            const pushCommand = `${command}\ngit push origin ${currentGitStatus.branch}`;
+            
+            if (confirm(`Commit and push changes?`)) {
+                logCommand(pushCommand, `Committed and pushed: ${commitMessage}`);
+                showSuccess(`Commit and push commands ready!\n\nRun these commands:\n${pushCommand}`);
+                
+                // Reset form
+                document.getElementById('commit-message').value = '';
+                updateCommitPreview();
+            }
+        }
+
+        function mergeBranch() {
+            const command = document.getElementById('merge-command').textContent;
+            if (confirm('Are you sure you want to merge? This cannot be easily undone.')) {
+                alert(`Merging branch...\n\nRun these commands:\n${command}`);
+            }
+        }
+
+        function deleteBranchAfterMerge() {
+            const source = document.getElementById('source-branch').value;
+            if (confirm(`Merge and delete ${source}? This cannot be undone.`)) {
+                mergeBranch();
+                alert(`After merge, also run:\ngit branch -d ${source}`);
+            }
+        }
+
+        // Quick action functions
+        async function quickStatus() {
+            showInfo('Getting Git status...');
+            
+            try {
+                const result = await realGit.executeGitCommand('git status', {
+                    description: 'Check repository status',
+                    autoExecute: true
+                });
+                
+                if (result.success) {
+                    showSuccess(`📊 Git Status:\n\n${result.stdout}`);
+                } else {
+                    showError(`❌ Failed to get status: ${result.stderr || result.error}`);
+                }
+                
+                await refreshGitStatus();
+            } catch (error) {
+                showError(`❌ Error getting status: ${error.message}`);
+            }
+        }
+
+        function quickPull() {
+            alert('Pulling latest changes...\n\nCommand: git pull origin <current-branch>');
+        }
+
+        function quickPush() {
+            alert('Pushing changes...\n\nCommand: git push origin <current-branch>');
+        }
+
+        function quickStash() {
+            alert('Stashing changes...\n\nCommand: git stash push -m "work in progress"');
+        }
+
+        function quickLog() {
+            alert('Viewing commit log...\n\nCommand: git log --oneline -10');
+        }
+
+        function emergencyHelp() {
+            alert('Emergency Help:\n\n1. Don\'t panic!\n2. Run: git status\n3. Check: git reflog\n4. Ask for help if needed\n\nSee TROUBLESHOOTING.md for detailed recovery procedures.');
+        }
+
+        // Emergency action functions
+        function undoLastCommit() {
+            if (confirm('Undo last commit? Changes will be kept as uncommitted.')) {
+                alert('Undoing last commit...\n\nCommand: git reset --soft HEAD~1');
+            }
+        }
+
+        function resetToOrigin() {
+            if (confirm('Reset to origin? ALL local changes will be lost!')) {
+                alert('Resetting to origin...\n\nCommand: git reset --hard origin/<current-branch>');
+            }
+        }
+
+        function stashEverything() {
+            alert('Stashing all changes...\n\nCommand: git stash push -m "emergency stash"');
+        }
+
+        function showReflog() {
+            alert('Showing reflog...\n\nCommand: git reflog --oneline -20');
+        }
+
+        function cleanupMergedBranches() {
+            alert('Cleaning up merged branches...\n\nCommand: cleanup_merged_branches');
+        }
+
+        function listAllBranches() {
+            alert('Listing all branches...\n\nCommand: git branch -a');
+        }
+
+        // Status functions
+        function showDetailedStatus() {
+            alert('Showing detailed status...\n\nCommand: git_status_overview');
+        }
+
+        function showBranchInfo() {
+            alert('Showing branch info...\n\nCommand: git branch -vv');
+        }
+
+        function showRemoteInfo() {
+            alert('Showing remote info...\n\nCommand: git remote -v');
+        }
+
+        function showRecentCommits() {
+            alert('Showing recent commits...\n\nCommand: git log --oneline -10');
+        }
+
+        function loadHelperFunctions() {
+            alert('Loading helper functions...\n\nCommands:\nsource scripts/git-helpers.sh\nsource scripts/individual-helpers.sh');
+        }
+
+        function showHelp() {
+            alert('Showing help...\n\nCommands:\ngit_help\nindividual_help');
+        }
+
+        // Individual developer functions
+        function createPersonalBranch() {
+            const name = prompt('Enter experiment name:');
+            if (name) {
+                alert(`Creating personal branch...\n\nCommand: personal_branch "${name}"`);
+            }
+        }
+
+        function backupCurrentWork() {
+            alert('Backing up current work...\n\nCommand: backup_branch');
+        }
+
+        function startCleanupProcess() {
+            const feature = prompt('Enter feature name for cleanup:');
+            if (feature) {
+                alert(`Starting cleanup process...\n\nCommand: start_cleanup "${feature}"`);
+            }
+        }
+
+        function findWorkingCommits() {
+            alert('Finding working commits...\n\nCommand: find_working_commits');
+        }
+
+        function emergencyExtract() {
+            const name = prompt('Enter feature name for emergency extraction:');
+            if (name) {
+                alert(`Emergency extraction...\n\nCommand: emergency_extract "${name}"`);
+            }
+        }
+
+        function experimentStatus() {
+            logCommand('experiment_status', 'Checked experiment status');
+            showInfo('Showing experiment status...\n\nCommand: experiment_status');
+        }
+
+        // Tutorial System
+        function startTutorial() {
+            const tutorials = [
+                { name: 'basic-workflow', title: '🚀 Basic Git Workflow' },
+                { name: 'individual-chaos', title: '🧪 Individual Developer Chaos Management' },
+                { name: 'team-coordination', title: '👥 Team Coordination' }
+            ];
+
+            showTutorialSelector(tutorials);
+        }
+
+        function showTutorialSelector(tutorials) {
+            const modal = document.createElement('div');
+            modal.className = 'tutorial-selector-modal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3>🎓 Choose Your Tutorial</h3>
+                        <span class="close" onclick="this.closest('.tutorial-selector-modal').remove()">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <p>Select a tutorial to get started with guided, hands-on Git workflow training:</p>
+                        <div class="tutorial-options">
+                            ${tutorials.map(tutorial => `
+                                <div class="tutorial-option" onclick="startSpecificTutorial('${tutorial.name}')">
+                                    <h4>${tutorial.title}</h4>
+                                    <p>${getTutorialDescription(tutorial.name)}</p>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+        }
+
+        function getTutorialDescription(tutorialName) {
+            const descriptions = {
+                'basic-workflow': 'Learn the fundamental Git operations: status, branch creation, commits, and merging.',
+                'individual-chaos': 'Master the chaos-to-clean workflow for experimental development.',
+                'team-coordination': 'Understand team collaboration patterns and safe merge practices.'
+            };
+            return descriptions[tutorialName] || 'Interactive Git tutorial';
+        }
+
+        function startSpecificTutorial(tutorialName) {
+            // Close selector
+            document.querySelector('.tutorial-selector-modal')?.remove();
+            
+            // Start the tutorial
+            if (typeof realGit !== 'undefined') {
+                realGit.startTutorial(tutorialName);
+            } else {
+                showError('Tutorial system not available. Please ensure Git integration is loaded.');
+            }
+        }
+
+        // Enhanced quick actions with real execution
+        async function quickPull() {
+            showInfo('Pulling latest changes...');
+            
+            try {
+                const result = await realGit.executeGitCommand('git pull origin $(git branch --show-current)', {
+                    description: 'Pull latest changes from remote',
+                    showCommand: true
+                });
+                
+                if (result.success) {
+                    showSuccess(`✅ Pull completed:\n\n${result.stdout}`);
+                    await refreshGitStatus();
+                } else if (!result.cancelled) {
+                    showError(`❌ Pull failed: ${result.stderr || result.error}`);
+                }
+            } catch (error) {
+                showError(`❌ Error pulling changes: ${error.message}`);
+            }
+        }
+
+        async function quickPush() {
+            showInfo('Pushing changes...');
+            
+            try {
+                const result = await realGit.executeGitCommand('git push origin $(git branch --show-current)', {
+                    description: 'Push changes to remote',
+                    showCommand: true
+                });
+                
+                if (result.success) {
+                    showSuccess(`✅ Push completed:\n\n${result.stdout}`);
+                    await refreshGitStatus();
+                } else if (!result.cancelled) {
+                    showError(`❌ Push failed: ${result.stderr || result.error}`);
+                }
+            } catch (error) {
+                showError(`❌ Error pushing changes: ${error.message}`);
+            }
+        }
+
+        async function quickStash() {
+            showInfo('Stashing changes...');
+            
+            try {
+                const result = await realGit.executeGitCommand('git stash push -m "Quick stash from GUI"', {
+                    description: 'Stash current changes',
+                    showCommand: true
+                });
+                
+                if (result.success) {
+                    showSuccess(`✅ Changes stashed:\n\n${result.stdout}`);
+                    await refreshGitStatus();
+                } else if (!result.cancelled) {
+                    showError(`❌ Stash failed: ${result.stderr || result.error}`);
+                }
+            } catch (error) {
+                showError(`❌ Error stashing changes: ${error.message}`);
+            }
+        }
+
+        async function quickLog() {
+            showInfo('Getting commit log...');
+            
+            try {
+                const result = await realGit.executeGitCommand('git log --oneline -10', {
+                    description: 'View recent commits',
+                    autoExecute: true
+                });
+                
+                if (result.success) {
+                    showSuccess(`📜 Recent Commits:\n\n${result.stdout}`);
+                } else {
+                    showError(`❌ Failed to get log: ${result.stderr || result.error}`);
+                }
+            } catch (error) {
+                showError(`❌ Error getting log: ${error.message}`);
+            }
+        }
+
+        // Enhanced utility functions
+        function showSuccess(message) {
+            showNotification(message, 'success');
+        }
+
+        function showError(message) {
+            showNotification(message, 'error');
+        }
+
+        function showWarning(message) {
+            showNotification(message, 'warning');
+        }
+
+        function showInfo(message) {
+            showNotification(message, 'info');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <div class="notification-message">${message.replace(/\n/g, '<br>')}</div>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">×</button>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Command history functions
+        function showCommandHistory() {
+            updateHistoryDisplay();
+            document.getElementById('history-modal').style.display = 'block';
+        }
+
+        function updateHistoryDisplay() {
+            const historyList = document.getElementById('command-history-list');
+            historyList.innerHTML = '';
+            
+            if (commandHistory.length === 0) {
+                historyList.innerHTML = '<p>No commands executed yet.</p>';
+                return;
+            }
+            
+            commandHistory.forEach((entry, index) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                historyItem.innerHTML = `
+                    <div class="history-header">
+                        <span class="history-time">${new Date(entry.timestamp).toLocaleString()}</span>
+                        <span class="history-branch">${entry.branch}</span>
+                        <span class="history-status ${entry.success ? 'success' : 'error'}">
+                            ${entry.success ? '✅' : '❌'}
+                        </span>
+                    </div>
+                    <div class="history-description">${entry.description}</div>
+                    <div class="history-command">
+                        <code>${entry.command}</code>
+                        <button class="btn-small" onclick="copyToClipboard('${entry.command.replace(/'/g, "\\'")}')">Copy</button>
+                    </div>
+                `;
+                historyList.appendChild(historyItem);
+            });
+        }
+
+        function closeHistoryModal() {
+            document.getElementById('history-modal').style.display = 'none';
+        }
+
+        function clearHistory() {
+            if (confirm('Clear all command history?')) {
+                commandHistory = [];
+                localStorage.removeItem('git-gui-history');
+                updateHistoryDisplay();
+                showSuccess('Command history cleared');
+            }
+        }
+
+        function exportHistory() {
+            const historyText = commandHistory.map(entry => 
+                `${new Date(entry.timestamp).toISOString()} [${entry.branch}] ${entry.description}\n${entry.command}\n`
+            ).join('\n');
+            
+            const blob = new Blob([historyText], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `git-command-history-${new Date().toISOString().split('T')[0]}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showSuccess('Command history exported');
+        }
+
+        // Help system
+        function showQuickHelp() {
+            const helpContent = document.getElementById('help-content');
+            helpContent.innerHTML = `
+                <div class="help-section">
+                    <h4>🚀 Quick Start</h4>
+                    <ul>
+                        <li>Use the action cards to perform common Git operations</li>
+                        <li>Commands are previewed before execution</li>
+                        <li>All actions are logged in command history</li>
+                        <li>Copy commands to clipboard for manual execution</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h4>🌿 Branch Naming</h4>
+                    <ul>
+                        <li><strong>feature/</strong> - New features (feature/user-auth)</li>
+                        <li><strong>experiment/</strong> - Research work (experiment/ml-cache)</li>
+                        <li><strong>personal/</strong> - Individual experiments (personal/john/testing)</li>
+                        <li><strong>hotfix/</strong> - Emergency fixes (hotfix/security-patch)</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h4>💾 Commit Types</h4>
+                    <ul>
+                        <li><strong>feat:</strong> New features</li>
+                        <li><strong>fix:</strong> Bug fixes</li>
+                        <li><strong>docs:</strong> Documentation changes</li>
+                        <li><strong>WIP:</strong> Work in progress (for experiments)</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h4>🆘 Emergency Actions</h4>
+                    <ul>
+                        <li><strong>Undo Last Commit:</strong> Keeps changes, removes commit</li>
+                        <li><strong>Reset to Origin:</strong> DANGEROUS - loses all local changes</li>
+                        <li><strong>Stash Everything:</strong> Saves changes for later</li>
+                        <li><strong>Show Reflog:</strong> Find lost commits</li>
+                    </ul>
+                </div>
+                
+                <div class="help-section">
+                    <h4>🔗 Related Dashboards</h4>
+                    <ul>
+                        <li><a href="team-dashboard.html">Team Dashboard</a> - Overall project status</li>
+                        <li><a href="individual-dashboard.html">Individual Dashboard</a> - Personal experiments</li>
+                        <li><a href="branch-visualizer.html">Branch Visualizer</a> - Visual branch structure</li>
+                    </ul>
+                </div>
+            `;
+            
+            document.getElementById('help-modal').style.display = 'block';
+        }
+
+        function closeHelpModal() {
+            document.getElementById('help-modal').style.display = 'none';
+        }
+
+        // Floating action button functions
+        function toggleFabMenu() {
+            const fabMenu = document.getElementById('fab-menu');
+            fabMenu.classList.toggle('open');
+        }
+
+        function refreshStatus() {
+            showInfo('Refreshing Git status...');
+            loadGitStatus();
+            logCommand('git status', 'Refreshed Git status');
+        }
+
+        function openTerminal() {
+            showInfo('Opening terminal...\n\nThis would open your system terminal in the project directory.');
+            logCommand('open terminal', 'Opened terminal');
+        }
+
+        // Enhanced clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                showSuccess('Command copied to clipboard!');
+            }).catch(() => {
+                showError('Failed to copy to clipboard');
+            });
+        }
+
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const historyModal = document.getElementById('history-modal');
+            const helpModal = document.getElementById('help-modal');
+            
+            if (event.target === historyModal) {
+                closeHistoryModal();
+            }
+            if (event.target === helpModal) {
+                closeHelpModal();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeHistoryModal();
+                closeHelpModal();
+            }
+            if (e.ctrlKey && e.key === 'h') {
+                e.preventDefault();
+                showCommandHistory();
+            }
+            if (e.ctrlKey && e.key === '?') {
+                e.preventDefault();
+                showQuickHelp();
+            }
+        });
+    </script>
+</body>
+</html>

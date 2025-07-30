@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Git Branch Visualizer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            color: #ecf0f1;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #bdc3c7;
+        }
+
+        .branch-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 15px;
+            padding: 30px;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .branch-tree {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            position: relative;
+        }
+
+        .branch-level {
+            display: flex;
+            align-items: center;
+            position: relative;
+            min-height: 60px;
+        }
+
+        .branch-node {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            border-radius: 10px;
+            padding: 15px 20px;
+            margin-right: 20px;
+            min-width: 200px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .branch-node:hover {
+            transform: translateX(5px);
+            border-color: #ecf0f1;
+            box-shadow: 0 5px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .branch-node.main {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+        }
+
+        .branch-node.staging {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+        }
+
+        .branch-node.develop {
+            background: linear-gradient(135deg, #27ae60, #229954);
+        }
+
+        .branch-node.draft {
+            background: linear-gradient(135deg, #9b59b6, #8e44ad);
+        }
+
+        .branch-node.feature {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+        }
+
+        .branch-node.experiment {
+            background: linear-gradient(135deg, #e67e22, #d35400);
+        }
+
+        .branch-node.personal {
+            background: linear-gradient(135deg, #1abc9c, #16a085);
+        }
+
+        .branch-node.hotfix {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        .branch-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            margin-bottom: 5px;
+        }
+
+        .branch-info {
+            font-size: 0.9em;
+            opacity: 0.9;
+        }
+
+        .branch-status {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid white;
+        }
+
+        .status-healthy {
+            background: #27ae60;
+        }
+
+        .status-warning {
+            background: #f39c12;
+        }
+
+        .status-error {
+            background: #e74c3c;
+        }
+
+        .status-inactive {
+            background: #95a5a6;
+        }
+
+        .branch-connections {
+            position: absolute;
+            left: 220px;
+            top: 30px;
+            width: 100px;
+            height: 2px;
+            background: #bdc3c7;
+            opacity: 0.5;
+        }
+
+        .branch-connections::before {
+            content: '';
+            position: absolute;
+            right: -5px;
+            top: -3px;
+            width: 0;
+            height: 0;
+            border-left: 8px solid #bdc3c7;
+            border-top: 4px solid transparent;
+            border-bottom: 4px solid transparent;
+        }
+
+        .child-branches {
+            margin-left: 40px;
+            border-left: 2px dashed #bdc3c7;
+            padding-left: 20px;
+            opacity: 0.8;
+        }
+
+        .legend {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 5px;
+        }
+
+        .legend-text {
+            font-size: 0.9em;
+        }
+
+        .branch-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 768px) {
+            .branch-level {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .branch-node {
+                margin-right: 0;
+                margin-bottom: 10px;
+                width: 100%;
+            }
+            
+            .branch-connections {
+                display: none;
+            }
+            
+            .child-branches {
+                margin-left: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+<script src="navigation.js"></script>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 Git Branch Visualizer</h1>
+            <p>Visual representation of your Git workflow structure</p>
+        </div>
+
+        <div class="branch-stats">
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Core Branches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">3</div>
+                <div class="stat-label">Feature Branches</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2</div>
+                <div class="stat-label">Experiments</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">1</div>
+                <div class="stat-label">Hotfixes</div>
+            </div>
+        </div>
+
+        <div class="branch-container">
+            <div class="branch-tree">
+                <!-- Main Branch -->
+                <div class="branch-level">
+                    <div class="branch-node main">
+                        <div class="branch-status status-healthy"></div>
+                        <div class="branch-name">main</div>
+                        <div class="branch-info">Production • Last: 2 days ago</div>
+                    </div>
+                    <div class="branch-connections"></div>
+                </div>
+
+                <!-- Staging Branch -->
+                <div class="branch-level">
+                    <div class="branch-node staging">
+                        <div class="branch-status status-warning"></div>
+                        <div class="branch-name">staging</div>
+                        <div class="branch-info">Testing • 3 commits ahead</div>
+                    </div>
+                    <div class="branch-connections"></div>
+                </div>
+
+                <!-- Develop Branch -->
+                <div class="branch-level">
+                    <div class="branch-node develop">
+                        <div class="branch-status status-healthy"></div>
+                        <div class="branch-name">develop</div>
+                        <div class="branch-info">Integration • 5 commits ahead</div>
+                    </div>
+                    <div class="branch-connections"></div>
+                    
+                    <!-- Feature Branches -->
+                    <div class="child-branches">
+                        <div class="branch-level">
+                            <div class="branch-node feature">
+                                <div class="branch-status status-healthy"></div>
+                                <div class="branch-name">feature/user-auth</div>
+                                <div class="branch-info">Ready for review • 4 commits</div>
+                            </div>
+                        </div>
+                        
+                        <div class="branch-level">
+                            <div class="branch-node feature">
+                                <div class="branch-status status-warning"></div>
+                                <div class="branch-name">feature/api-redesign</div>
+                                <div class="branch-info">In progress • 7 commits</div>
+                            </div>
+                        </div>
+                        
+                        <div class="branch-level">
+                            <div class="branch-node feature">
+                                <div class="branch-status status-error"></div>
+                                <div class="branch-name">feature/payment-gateway</div>
+                                <div class="branch-info">Conflicts • 12 commits</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Draft Branch -->
+                <div class="branch-level">
+                    <div class="branch-node draft">
+                        <div class="branch-status status-inactive"></div>
+                        <div class="branch-name">draft</div>
+                        <div class="branch-info">Experiments • 2 commits ahead</div>
+                    </div>
+                    <div class="branch-connections"></div>
+                    
+                    <!-- Experiment Branches -->
+                    <div class="child-branches">
+                        <div class="branch-level">
+                            <div class="branch-node experiment">
+                                <div class="branch-status status-warning"></div>
+                                <div class="branch-name">experiment/ml-recommendations</div>
+                                <div class="branch-info">Testing • 15 commits</div>
+                            </div>
+                        </div>
+                        
+                        <div class="branch-level">
+                            <div class="branch-node experiment">
+                                <div class="branch-status status-healthy"></div>
+                                <div class="branch-name">experiment/redis-cache</div>
+                                <div class="branch-info">Working • 8 commits</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Personal Branches -->
+                <div class="branch-level">
+                    <div class="branch-node personal">
+                        <div class="branch-status status-healthy"></div>
+                        <div class="branch-name">personal/john/auth-jwt</div>
+                        <div class="branch-info">Ready to clean • 23 commits</div>
+                    </div>
+                </div>
+
+                <!-- Hotfix Branch -->
+                <div class="branch-level">
+                    <div class="branch-node hotfix">
+                        <div class="branch-status status-error"></div>
+                        <div class="branch-name">hotfix/security-patch</div>
+                        <div class="branch-info">URGENT • 2 commits</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #e74c3c, #c0392b);"></div>
+                <div class="legend-text">Production (main)</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #f39c12, #e67e22);"></div>
+                <div class="legend-text">Staging</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #27ae60, #229954);"></div>
+                <div class="legend-text">Development</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);"></div>
+                <div class="legend-text">Draft/Experimental</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #3498db, #2980b9);"></div>
+                <div class="legend-text">Features</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color" style="background: linear-gradient(135deg, #1abc9c, #16a085);"></div>
+                <div class="legend-text">Personal Work</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-healthy"></div>
+                <div class="legend-text">Healthy</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-warning"></div>
+                <div class="legend-text">Needs Attention</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-error"></div>
+                <div class="legend-text">Issues</div>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color status-inactive"></div>
+                <div class="legend-text">Inactive</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Branch Details Modal -->
+    <div id="branch-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modal-branch-name">Branch Details</h3>
+                <span class="close" onclick="closeBranchModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div id="modal-branch-info"></div>
+                <div class="modal-actions">
+                    <button class="btn btn-primary" onclick="switchToBranch()">Switch to Branch</button>
+                    <button class="btn btn-secondary" onclick="viewCommits()">View Commits</button>
+                    <button class="btn btn-warning" onclick="mergeBranch()">Merge</button>
+                    <button class="btn btn-danger" onclick="deleteBranch()">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div id="tooltip" class="tooltip"></div>
+
+    <!-- Filter Controls -->
+    <div class="filter-controls">
+        <button class="filter-btn active" onclick="filterBranches('all')">All</button>
+        <button class="filter-btn" onclick="filterBranches('core')">Core</button>
+        <button class="filter-btn" onclick="filterBranches('feature')">Features</button>
+        <button class="filter-btn" onclick="filterBranches('experiment')">Experiments</button>
+        <button class="filter-btn" onclick="filterBranches('personal')">Personal</button>
+    </div>
+
+    <script>
+        let currentBranch = null;
+        let branches = {
+            'main': {
+                type: 'core',
+                status: 'healthy',
+                commits: 156,
+                lastCommit: '2 days ago',
+                author: 'DevOps Team',
+                description: 'Production-ready code',
+                actions: ['view-commits']
+            },
+            'staging': {
+                type: 'core',
+                status: 'warning',
+                commits: 159,
+                lastCommit: '4 hours ago',
+                author: 'QA Team',
+                description: 'Pre-production testing environment',
+                actions: ['view-commits', 'reset-staging']
+            },
+            'develop': {
+                type: 'core',
+                status: 'healthy',
+                commits: 161,
+                lastCommit: '1 hour ago',
+                author: 'Development Team',
+                description: 'Integration branch for features',
+                actions: ['switch', 'view-commits', 'merge-to-staging']
+            },
+            'draft': {
+                type: 'core',
+                status: 'inactive',
+                commits: 158,
+                lastCommit: '1 week ago',
+                author: 'Experimenters',
+                description: 'Proof-of-concept work',
+                actions: ['switch', 'view-commits']
+            },
+            'feature/user-auth': {
+                type: 'feature',
+                status: 'healthy',
+                commits: 4,
+                lastCommit: '2 hours ago',
+                author: 'John Doe',
+                description: 'JWT authentication implementation',
+                actions: ['switch', 'view-commits', 'merge-to-develop', 'delete']
+            },
+            'feature/api-redesign': {
+                type: 'feature',
+                status: 'warning',
+                commits: 7,
+                lastCommit: '1 day ago',
+                author: 'Jane Smith',
+                description: 'RESTful API restructure',
+                actions: ['switch', 'view-commits', 'resolve-conflicts']
+            },
+            'feature/payment-gateway': {
+                type: 'feature',
+                status: 'error',
+                commits: 12,
+                lastCommit: '3 days ago',
+                author: 'Mike Johnson',
+                description: 'Payment processing integration',
+                actions: ['switch', 'view-commits', 'resolve-conflicts', 'delete']
+            },
+            'experiment/ml-recommendations': {
+                type: 'experiment',
+                status: 'warning',
+                commits: 15,
+                lastCommit: '6 hours ago',
+                author: 'AI Team',
+                description: 'Machine learning recommendation engine',
+                actions: ['switch', 'view-commits', 'backup', 'archive']
+            },
+            'experiment/redis-cache': {
+                type: 'experiment',
+                status: 'healthy',
+                commits: 8,
+                lastCommit: '30 minutes ago',
+                author: 'Performance Team',
+                description: 'Redis caching implementation',
+                actions: ['switch', 'view-commits', 'promote-to-feature']
+            },
+            'personal/john/auth-jwt': {
+                type: 'personal',
+                status: 'healthy',
+                commits: 23,
+                lastCommit: '10 minutes ago',
+                author: 'John Doe',
+                description: 'Personal JWT authentication experiments',
+                actions: ['switch', 'view-commits', 'cleanup', 'backup', 'delete']
+            },
+            'hotfix/security-patch': {
+                type: 'hotfix',
+                status: 'error',
+                commits: 2,
+                lastCommit: '5 minutes ago',
+                author: 'Security Team',
+                description: 'Critical security vulnerability fix',
+                actions: ['switch', 'view-commits', 'merge-to-main', 'merge-to-develop']
+            }
+        };
+
+        // Initialize interactive features
+        document.addEventListener('DOMContentLoaded', function() {
+            addBranchClickHandlers();
+            addHoverEffects();
+            updateBranchStats();
+        });
+
+        function addBranchClickHandlers() {
+            const branchNodes = document.querySelectorAll('.branch-node');
+            branchNodes.forEach(node => {
+                node.addEventListener('click', function() {
+                    const branchName = this.querySelector('.branch-name').textContent;
+                    showBranchDetails(branchName);
+                });
+            });
+        }
+
+        function addHoverEffects() {
+            const branchNodes = document.querySelectorAll('.branch-node');
+            const tooltip = document.getElementById('tooltip');
+
+            branchNodes.forEach(node => {
+                node.addEventListener('mouseenter', function(e) {
+                    const branchName = this.querySelector('.branch-name').textContent;
+                    const branch = branches[branchName];
+                    
+                    if (branch) {
+                        tooltip.innerHTML = `
+                            <strong>${branchName}</strong><br>
+                            ${branch.commits} commits<br>
+                            Last: ${branch.lastCommit}<br>
+                            By: ${branch.author}
+                        `;
+                        tooltip.style.display = 'block';
+                        tooltip.style.left = e.pageX + 10 + 'px';
+                        tooltip.style.top = e.pageY + 10 + 'px';
+                    }
+                });
+
+                node.addEventListener('mouseleave', function() {
+                    tooltip.style.display = 'none';
+                });
+
+                node.addEventListener('mousemove', function(e) {
+                    tooltip.style.left = e.pageX + 10 + 'px';
+                    tooltip.style.top = e.pageY + 10 + 'px';
+                });
+            });
+        }
+
+        function showBranchDetails(branchName) {
+            const branch = branches[branchName];
+            if (!branch) return;
+
+            currentBranch = branchName;
+            document.getElementById('modal-branch-name').textContent = branchName;
+            
+            const modalInfo = document.getElementById('modal-branch-info');
+            modalInfo.innerHTML = `
+                <div class="branch-detail-grid">
+                    <div class="detail-item">
+                        <strong>Type:</strong> ${branch.type}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Status:</strong> <span class="status-${branch.status}">${branch.status}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Commits:</strong> ${branch.commits}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Last Commit:</strong> ${branch.lastCommit}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Author:</strong> ${branch.author}
+                    </div>
+                    <div class="detail-item">
+                        <strong>Description:</strong> ${branch.description}
+                    </div>
+                </div>
+            `;
+
+            // Update action buttons based on branch
+            updateModalActions(branch.actions);
+            
+            document.getElementById('branch-modal').style.display = 'block';
+        }
+
+        function updateModalActions(actions) {
+            const actionButtons = document.querySelectorAll('.modal-actions .btn');
+            actionButtons.forEach(btn => btn.style.display = 'none');
+
+            actions.forEach(action => {
+                switch(action) {
+                    case 'switch':
+                        document.querySelector('.btn-primary').style.display = 'inline-block';
+                        break;
+                    case 'view-commits':
+                        document.querySelector('.btn-secondary').style.display = 'inline-block';
+                        break;
+                    case 'merge-to-develop':
+                    case 'merge-to-staging':
+                    case 'merge-to-main':
+                        document.querySelector('.btn-warning').style.display = 'inline-block';
+                        document.querySelector('.btn-warning').textContent = action.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        break;
+                    case 'delete':
+                        document.querySelector('.btn-danger').style.display = 'inline-block';
+                        break;
+                }
+            });
+        }
+
+        function closeBranchModal() {
+            document.getElementById('branch-modal').style.display = 'none';
+            currentBranch = null;
+        }
+
+        function switchToBranch() {
+            if (currentBranch) {
+                alert(`Switching to ${currentBranch}...\nRun: git checkout ${currentBranch}`);
+                closeBranchModal();
+            }
+        }
+
+        function viewCommits() {
+            if (currentBranch) {
+                alert(`Viewing commits for ${currentBranch}...\nRun: git log --oneline ${currentBranch}`);
+            }
+        }
+
+        function mergeBranch() {
+            if (currentBranch) {
+                const branch = branches[currentBranch];
+                let target = 'develop';
+                if (currentBranch.includes('hotfix')) target = 'main';
+                if (currentBranch === 'develop') target = 'staging';
+                
+                if (confirm(`Merge ${currentBranch} to ${target}?`)) {
+                    alert(`Merging ${currentBranch} to ${target}...\nRun: git checkout ${target} && git merge --no-ff ${currentBranch}`);
+                    closeBranchModal();
+                }
+            }
+        }
+
+        function deleteBranch() {
+            if (currentBranch && confirm(`Delete ${currentBranch}? This cannot be undone.`)) {
+                alert(`Deleting ${currentBranch}...\nRun: git branch -D ${currentBranch}`);
+                closeBranchModal();
+            }
+        }
+
+        function filterBranches(type) {
+            const branchNodes = document.querySelectorAll('.branch-node');
+            const filterBtns = document.querySelectorAll('.filter-btn');
+            
+            // Update active filter button
+            filterBtns.forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            branchNodes.forEach(node => {
+                const branchName = node.querySelector('.branch-name').textContent;
+                const branch = branches[branchName];
+                
+                if (type === 'all' || !branch) {
+                    node.parentElement.style.display = 'flex';
+                } else if (type === 'core' && ['main', 'staging', 'develop', 'draft'].includes(branchName)) {
+                    node.parentElement.style.display = 'flex';
+                } else if (type === 'feature' && branchName.startsWith('feature/')) {
+                    node.parentElement.style.display = 'flex';
+                } else if (type === 'experiment' && branchName.startsWith('experiment/')) {
+                    node.parentElement.style.display = 'flex';
+                } else if (type === 'personal' && branchName.startsWith('personal/')) {
+                    node.parentElement.style.display = 'flex';
+                } else {
+                    node.parentElement.style.display = 'none';
+                }
+            });
+        }
+
+        function updateBranchStats() {
+            const stats = {
+                core: 0,
+                feature: 0,
+                experiment: 0,
+                hotfix: 0
+            };
+
+            Object.keys(branches).forEach(branchName => {
+                if (['main', 'staging', 'develop', 'draft'].includes(branchName)) {
+                    stats.core++;
+                } else if (branchName.startsWith('feature/')) {
+                    stats.feature++;
+                } else if (branchName.startsWith('experiment/')) {
+                    stats.experiment++;
+                } else if (branchName.startsWith('hotfix/')) {
+                    stats.hotfix++;
+                }
+            });
+
+            document.querySelectorAll('.stat-number')[0].textContent = stats.core;
+            document.querySelectorAll('.stat-number')[1].textContent = stats.feature;
+            document.querySelectorAll('.stat-number')[2].textContent = stats.experiment;
+            document.querySelectorAll('.stat-number')[3].textContent = stats.hotfix;
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('branch-modal');
+            if (event.target === modal) {
+                closeBranchModal();
+            }
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeBranchModal();
+            }
+        });
+    </script>
+
+    <style>
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            margin: 5% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 600px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            color: #ecf0f1;
+        }
+
+        .modal-header {
+            padding: 20px 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .close {
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #bdc3c7;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover {
+            color: #ecf0f1;
+        }
+
+        .modal-body {
+            padding: 30px;
+        }
+
+        .branch-detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .detail-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Tooltip Styles */
+        .tooltip {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 0.9em;
+            z-index: 1000;
+            display: none;
+            pointer-events: none;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Filter Controls */
+        .filter-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+            z-index: 100;
+        }
+
+        .filter-btn {
+            padding: 10px 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border: none;
+            border-radius: 20px;
+            color: #ecf0f1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .filter-btn:hover,
+        .filter-btn.active {
+            background: rgba(52, 152, 219, 0.8);
+            transform: translateY(-2px);
+        }
+
+        /* Status indicators in modal */
+        .status-healthy {
+            color: #27ae60;
+            font-weight: bold;
+        }
+
+        .status-warning {
+            color: #f39c12;
+            font-weight: bold;
+        }
+
+        .status-error {
+            color: #e74c3c;
+            font-weight: bold;
+        }
+
+        .status-inactive {
+            color: #95a5a6;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .filter-controls {
+                position: static;
+                margin-bottom: 20px;
+                justify-content: center;
+                flex-wrap: wrap;
+            }
+
+            .modal-content {
+                width: 95%;
+                margin: 10% auto;
+            }
+
+            .modal-actions {
+                justify-content: center;
+            }
+        }
+    </style>
+</body>
+</html>
