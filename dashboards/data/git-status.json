@@ -1,49 +1,22 @@
 {
-  "timestamp": "2025-07-30T05:44:46Z",
+  "timestamp": "2025-07-30T14:37:47Z",
   "currentBranch": "main",
-  "totalBranches": 4,
+  "totalBranches": 5,
   "uncommittedFiles": 0,
   "commitsAhead": 0,
   "commitsBehind": 0,
   "repositoryStatus": "clean",
-  "lastCommit": "ec08895 - feat: add real Git integration with command execution and interactive tutorials (2 minutes ago)",
-  "remoteUrl": "No remote",
+  "lastCommit": "8f754f5 - feat: add complete GitHub Actions automation and branch protection (38 minutes ago)",
+  "remoteUrl": "https://github.com/CrazyDubya/git-managed",
   "stashCount": 0,
   "branches": [
-    {
-      "name": "develop",
-      "type": "core",
-      "status": "inactive",
-      "lastCommit": "2 days ago",
-      "author": "CodeFixer CLI",
-      "subject": "feat: initial git workflow setup with documentation and helper scripts"
-    }
-,
-    {
-      "name": "draft",
-      "type": "core",
-      "status": "inactive",
-      "lastCommit": "2 days ago",
-      "author": "CodeFixer CLI",
-      "subject": "feat: initial git workflow setup with documentation and helper scripts"
-    }
-,
     {
       "name": "main",
       "type": "core",
       "status": "active",
-      "lastCommit": "2 minutes ago",
-      "author": "CodeFixer CLI",
-      "subject": "feat: add real Git integration with command execution and interactive tutorials"
-    }
-,
-    {
-      "name": "staging",
-      "type": "core",
-      "status": "inactive",
-      "lastCommit": "2 days ago",
-      "author": "CodeFixer CLI",
-      "subject": "feat: initial git workflow setup with documentation and helper scripts"
+      "lastCommit": "38 minutes ago",
+      "author": "Musical Theater Creator",
+      "subject": "feat: add complete GitHub Actions automation and branch protection"
     }
 
   ]
