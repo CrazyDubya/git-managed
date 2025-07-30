@@ -154,12 +154,19 @@ emergency_reset                        # Emergency branch recovery (DANGEROUS)
 
 ```bash
 # Personal branches
-create_personal "your-name" "topic"    # Creates personal/your-name/topic
+personal_branch "topic"                # Creates personal branch for current user
+backup_branch                          # Creates backup of current branch
 
-# Quick workflows
-daily_standup                          # Shows your recent work
-weekly_cleanup                         # Cleans your branches
-my_branches                           # Lists your branches only
+# Workflow management
+messy_commit                           # Commits work-in-progress with automatic message
+start_cleanup                          # Interactive branch cleanup
+experiment_status                      # Shows status of experimental branches
+
+# Advanced functions
+find_working_commits                   # Finds commits with working code
+compare_experiments                    # Compares different experimental approaches
+emergency_extract                     # Extracts specific commits to new branch
+individual_help                        # Shows available individual helper commands
 ```
 
 ### Dashboard Management
