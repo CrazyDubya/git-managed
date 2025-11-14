@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
   schedule:
     # Update dashboard data every 15 minutes during work hours (9 AM - 6 PM UTC)
-    - cron: '*/15 9-18 * * 1-5'
+    - cron: '*/180 9-15 * * 1-5'
   workflow_dispatch:
     # Allow manual triggering
 
